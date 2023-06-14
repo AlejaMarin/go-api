@@ -12,7 +12,7 @@ import (
 type Product struct {
 	ID          int     `json:"id"`
 	Name        string  `json:"name"`
-	Quantity    int     `json:"quantity"`
+	Quantity    uint    `json:"quantity"`
 	CodeValue   string  `json:"code_value"`
 	IsPublished bool    `json:"is_published"`
 	Expiration  string  `json:"expiration"`
@@ -49,7 +49,7 @@ func AddProduct(c *gin.Context) {
 		return
 	}
 	name := c.Query("name")
-	quantity, err2 := strconv.Atoi(c.Query("quantity"))
+	quantity, err2 := strconv.ParseUint(c.Query("quantity"), 10, 32)
 	if err2 != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Quantity",
@@ -73,7 +73,7 @@ func AddProduct(c *gin.Context) {
 		return
 	}
 
-	p := Product{id, name, quantity, codeValue, isP, exp, price}
+	p := Product{id, name, uint(quantity), codeValue, isP, exp, price}
 	products = append(products, p)
 
 	c.JSON(http.StatusOK, p)
@@ -88,83 +88,75 @@ func GetById(c *gin.Context) {
 		})
 		return
 	}
-	var encontrado Product
+
 	for _, v := range products {
 		if id == v.ID {
-			encontrado = v
+			c.JSON(http.StatusOK, v)
+			return
 		}
 	}
-	if encontrado != (Product{}) {
-		c.JSON(http.StatusOK, encontrado)
-	} else {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Product Not Found",
-		})
-	}
+
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "Product Not Found",
+	})
 }
 
 func SearchByQuantity(c *gin.Context) {
 
-	min, err := strconv.Atoi(c.Query("min"))
+	min, err := strconv.ParseUint(c.Query("min"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Min",
 		})
 		return
 	}
-	max, err := strconv.Atoi(c.Query("max"))
+	max, err := strconv.ParseUint(c.Query("max"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Max",
 		})
 		return
 	}
-	var lista []Product
+	var lista = []Product{}
 	for _, v := range products {
-
-		if v.Quantity > min && v.Quantity < max {
+		if v.Quantity > uint(min) && v.Quantity < uint(max) {
 			lista = append(lista, v)
 		}
-
-	}
-	if len(lista) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Products Not Found",
-		})
-	} else {
-		c.JSON(http.StatusOK, lista)
 	}
 
+	c.JSON(http.StatusOK, lista)
 }
 
 func BuyProduct(c *gin.Context) {
 
 	code := c.Query("code_value")
-	cant, err := strconv.Atoi(c.Query("quantity"))
+	cant, err := strconv.ParseUint(c.Query("quantity"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Quantity",
 		})
 		return
 	}
-	var encontrado Product
 	for _, v := range products {
 		if code == v.CodeValue {
-			encontrado = v
+			if v.Quantity < uint(cant) {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "cantidad insuficiente",
+				})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"nombre-producto": v.Name,
+				"cantidad":        cant,
+				"precio-total":    float64(cant) * (v.Price),
+			})
+			return
 		}
 	}
-	if encontrado != (Product{}) {
-		c.JSON(http.StatusOK, gin.H{
-			"nombre-producto": encontrado.Name,
-			"cantidad":        cant,
-			"precio-total":    float64(cant) * (encontrado.Price),
-		})
-	} else {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Product Not Found",
-		})
-	}
 
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"error": "No se pudo crear la venta porque no se encontró el producto - Product Not Found",
+	})
 }
 
 func Search(c *gin.Context) {
