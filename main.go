@@ -29,14 +29,21 @@ func main() {
 	r.GET("/ping", func(c *gin.Context) { c.String(http.StatusOK, "pong") })
 	productsGroup := r.Group("/products")
 	{
+		productsGroup.GET("", GetAllProducts)
 		productsGroup.GET("/search", Search) // query param: products/search?priceGt=100&isPublished=true
 		productsGroup.GET("/productparams", AddProduct)
 		productsGroup.GET("/:id", GetById)
 		productsGroup.GET("/searchbyquantity", SearchByQuantity)
 		productsGroup.GET("/buy", BuyProduct)
+		productsGroup.POST("", PostProduct)
 	}
 
 	r.Run(":8080")
+}
+
+func GetAllProducts(c *gin.Context) {
+
+	c.JSON(200, products)
 }
 
 func AddProduct(c *gin.Context) {
@@ -178,6 +185,51 @@ func Search(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, list)
+}
+
+func PostProduct(c *gin.Context) {
+
+	var p Product
+	err := c.ShouldBindJSON(&p)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product"})
+		return
+	}
+	p.ID = len(products) + 1
+	if p.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "name required"})
+		return
+	}
+	if p.Quantity <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "quantity required"})
+		return
+	}
+	if p.CodeValue == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "code value required"})
+		return
+	}
+	for _, v := range products {
+		if p.CodeValue == v.CodeValue {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "code value already exists",
+			})
+			return
+		}
+	}
+	if p.IsPublished != true {
+		p.IsPublished = false
+	}
+	if p.Expiration == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "expiration required"})
+		return
+	}
+	// TODO: Verificar formato de fecha "DD/MM/YYYY"
+	if p.Price <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "price required"})
+		return
+	}
+	products = append(products, p)
+	c.JSON(http.StatusCreated, p)
 }
 
 func loadProducts(path string) {
