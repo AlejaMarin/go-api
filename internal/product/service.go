@@ -12,6 +12,8 @@ type Service interface {
 	SearchPriceGt(price float64) ([]domain.Product, error)
 	Create(p domain.Product) (domain.Product, error)
 	Update(id int, p domain.Product) (domain.Product, error)
+	Patch(id int, p domain.Product) error
+	Delete(id int) error
 }
 
 type service struct {
@@ -69,4 +71,46 @@ func (s *service) Update(id int, p domain.Product) (domain.Product, error) {
 	}
 
 	return p, nil
+}
+
+func (s *service) Patch(id int, p domain.Product) error {
+
+	prod, err := s.r.GetByID(id)
+	if err != nil {
+		return err
+	}
+
+	if p.Name != "" {
+		prod.Name = p.Name
+	}
+	if p.Quantity > 0 {
+		prod.Quantity = p.Quantity
+	}
+	if p.CodeValue != "" {
+		prod.CodeValue = p.CodeValue
+	}
+	if p.IsPublished != prod.IsPublished {
+		prod.IsPublished = p.IsPublished
+	}
+	if p.Expiration != "" {
+		prod.Expiration = p.Expiration
+	}
+	if p.Price > 0 {
+		prod.Price = p.Price
+	}
+	err = s.r.Patch(id, prod)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) Delete(id int) error {
+
+	err := s.r.Delete(id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

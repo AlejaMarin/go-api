@@ -12,6 +12,8 @@ type Repository interface {
 	SearchPriceGt(price float64) []domain.Product
 	Create(p domain.Product) (domain.Product, error)
 	Update(p domain.Product) error
+	Patch(id int, p domain.Product) error
+	Delete(id int) error
 }
 
 type repository struct {
@@ -72,6 +74,32 @@ func (r *repository) Update(p domain.Product) error {
 		}
 	}
 
+	return errors.New("product not found")
+}
+
+func (r *repository) Patch(id int, p domain.Product) error {
+
+	for i, prod := range r.list {
+		if prod.Id == id {
+			if !r.validateCodeValue(p.CodeValue) && prod.CodeValue != p.CodeValue {
+				return errors.New("code value already exist")
+			}
+			r.list[i] = p
+			return nil
+		}
+	}
+
+	return errors.New("product not found")
+}
+
+func (r *repository) Delete(id int) error {
+
+	for i, product := range r.list {
+		if product.Id == id {
+			r.list = append(r.list[:i], r.list[i+1:]...)
+			return nil
+		}
+	}
 	return errors.New("product not found")
 }
 

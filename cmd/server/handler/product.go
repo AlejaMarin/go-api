@@ -83,8 +83,8 @@ func validateEmptys(product *domain.Product) (bool, error) {
 }
 
 // validateExpiration valida que la fecha de expiracion sea valida
-func validateExpiration(product *domain.Product) (bool, error) {
-	dates := strings.Split(product.Expiration, "/")
+func validateExpiration(exp string) (bool, error) {
+	dates := strings.Split(exp, "/")
 	list := []int{}
 	if len(dates) != 3 {
 		return false, errors.New("invalid expiration date, must be in format: dd/mm/yyyy")
@@ -117,7 +117,7 @@ func (h *productHandler) Post() gin.HandlerFunc {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		valid, err = validateExpiration(&product)
+		valid, err = validateExpiration(product.Expiration)
 		if !valid {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -156,7 +156,7 @@ func (h *productHandler) Put() gin.HandlerFunc {
 			})
 			return
 		}
-		valid, err = validateExpiration(&product)
+		valid, err = validateExpiration(product.Expiration)
 		if !valid {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err,
@@ -180,5 +180,73 @@ func (h *productHandler) Put() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, p)
+	}
+}
+
+func (h *productHandler) Patch() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid id",
+			})
+			return
+		}
+		var product domain.ProductPatchRequest
+		err = c.ShouldBindJSON(&product)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid body",
+			})
+			return
+		}
+
+		patchProduct := domain.Product{
+			Name:        product.Name,
+			Quantity:    product.Quantity,
+			CodeValue:   product.CodeValue,
+			IsPublished: product.IsPublished,
+			Expiration:  product.Expiration,
+			Price:       product.Price,
+		}
+
+		if patchProduct.Expiration != "" {
+			valid, err := validateExpiration(patchProduct.Expiration)
+			if !valid {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+		}
+
+		err = h.s.Patch(id, patchProduct)
+		if err != nil {
+
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"success": "product updated"})
+	}
+}
+
+func (h *productHandler) Delete() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			return
+		}
+		err = h.s.Delete(id)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": "product deleted"})
 	}
 }
