@@ -13,12 +13,12 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load("./cmd/server/.env"); err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatal(err)
 	}
 
 	var productsList = []domain.Product{}
-	loadProducts("products.json", &productsList)
+	loadProducts("../../products.json", &productsList)
 
 	repo := product.NewRepository(productsList)
 	service := product.NewService(repo)
