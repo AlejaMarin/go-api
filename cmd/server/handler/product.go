@@ -142,6 +142,17 @@ func validateExpiration(exp string) (bool, error) {
 }
 
 // Post crear un producto nuevo
+// Post godoc
+// @Summary Create a new product
+// @Description Create a new product in repository
+// @Tags products
+// @Produce json
+// @Param token header string true "token"
+// @Param body body domain.Product true "Product"
+// @Success 201 {object} web.response
+// @Failure 400 {object} web.errorResponse
+// @Failure 404 {object} web.errorResponse
+// @Router /products [post]
 func (h *productHandler) Post() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var product domain.Product
