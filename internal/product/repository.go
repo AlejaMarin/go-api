@@ -47,7 +47,7 @@ func (r *repository) GetByID(id int) (domain.Product, error) {
 }
 
 func (r *repository) Create(p domain.Product) (domain.Product, error) {
-	if !r.storage.Exists(p.CodeValue) {
+	if r.storage.Exists(p.CodeValue) {
 		return domain.Product{}, errors.New("code value already exists")
 	}
 	err := r.storage.Create(p)
@@ -66,7 +66,7 @@ func (r *repository) Delete(id int) error {
 }
 
 func (r *repository) Update(id int, p domain.Product) (domain.Product, error) {
-	if !r.storage.Exists(p.CodeValue) {
+	if r.storage.Exists(p.CodeValue) {
 		return domain.Product{}, errors.New("code value already exists")
 	}
 	err := r.storage.Update(p)

@@ -94,7 +94,7 @@ func validateExpiration(exp string) (bool, error) {
 func (h *productHandler) Post() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var product domain.Product
-		token := c.GetHeader("TOKEN")
+		/* token := c.GetHeader("TOKEN")
 		if token == "" {
 			web.Failure(c, 401, errors.New("token not found"))
 			return
@@ -102,7 +102,7 @@ func (h *productHandler) Post() gin.HandlerFunc {
 		if token != os.Getenv("TOKEN") {
 			web.Failure(c, 401, errors.New("invalid token"))
 			return
-		}
+		} */
 		err := c.ShouldBindJSON(&product)
 		if err != nil {
 			web.Failure(c, 400, errors.New("invalid json"))
@@ -130,7 +130,7 @@ func (h *productHandler) Post() gin.HandlerFunc {
 // Delete elimina un producto
 func (h *productHandler) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("TOKEN")
+		/* token := c.GetHeader("TOKEN")
 		if token == "" {
 			web.Failure(c, 401, errors.New("token not found"))
 			return
@@ -138,7 +138,7 @@ func (h *productHandler) Delete() gin.HandlerFunc {
 		if token != os.Getenv("TOKEN") {
 			web.Failure(c, 401, errors.New("invalid token"))
 			return
-		}
+		} */
 		idParam := c.Param("id")
 		id, err := strconv.Atoi(idParam)
 		if err != nil {
@@ -157,7 +157,7 @@ func (h *productHandler) Delete() gin.HandlerFunc {
 // Put actualiza un producto
 func (h *productHandler) Put() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("TOKEN")
+		/* token := c.GetHeader("TOKEN")
 		if token == "" {
 			web.Failure(c, 401, errors.New("token not found"))
 			return
@@ -165,7 +165,7 @@ func (h *productHandler) Put() gin.HandlerFunc {
 		if token != os.Getenv("TOKEN") {
 			web.Failure(c, 401, errors.New("invalid token"))
 			return
-		}
+		} */
 		idParam := c.Param("id")
 		id, err := strconv.Atoi(idParam)
 		if err != nil {
